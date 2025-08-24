@@ -2,8 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary-color: #d541e8;      /* Lavender purple accent */
-  --secondary-color: #b030c6;    /* Darker variant for hovers and interactions */
+  --primary-color: #b57edc;      /* Lavender purple accent */
+  --secondary-color: #7c5aa4;    /* Darker variant for hovers and interactions */
   --background-color: #0b0c10;   /* Deep space-like background */
   --surface-color: rgba(26, 27, 34, 0.85); /* Semi-transparent glassmorphic surface */
   --text-color: #ffffff;
