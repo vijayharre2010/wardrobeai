@@ -1,7 +1,0 @@
-{
-  "name": "wardrobeai",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "react-vite"
-}
