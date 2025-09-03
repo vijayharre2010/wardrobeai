@@ -1,7 +1,0 @@
-{
-  "name": "wardrobe-ai",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "vue-vite"
-}
