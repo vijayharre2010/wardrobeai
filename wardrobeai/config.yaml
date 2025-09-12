@@ -1,0 +1,209 @@
+# WardrobeAI Configuration File
+# Edit this file to dynamically update pricing, features, messaging, and other aspects of the application
+
+# Application Settings
+app:
+  name: "WardrobeAI"
+  tagline: "Your AI-powered wardrobe assistant for perfect outfit suggestions"
+  description: "Experience the future of fashion with AI-generated outfits and personalized recommendations"
+
+# Pricing Plans
+pricing:
+  countdown_hours: 24  # Hours for limited time offer countdown
+
+  plans:
+    monthly:
+      name: "1 Month"
+      price: 9.99
+      original_price: null
+      period: "month"
+      popular: false
+      best_value: false
+      features:
+        - "Unlimited daily suggestions"
+        - "AI image generation"
+        - "Advanced personalization"
+
+    quarterly:
+      name: "3 Months"
+      price: 26.97
+      original_price: 29.97
+      savings: 3.00
+      period: "quarter"
+      popular: true
+      best_value: false
+      features:
+        - "Everything in 1 Month"
+        - "Priority support"
+        - "Early access to new features"
+
+    yearly:
+      name: "12 Months"
+      price: 95.88
+      original_price: 119.85
+      savings: 23.97
+      period: "year"
+      popular: false
+      best_value: true
+      features:
+        - "Everything in 3 Months"
+        - "VIP customer support"
+        - "Exclusive AI features"
+
+# Social Proof
+social_proof:
+  user_count: 10000
+  rating: 4.9
+  rating_stars: 5
+
+# Usage Limits (for free users)
+usage_limits:
+  daily_suggestions: 1
+  ai_generations: 1
+
+# Messages and Copy
+messages:
+  limited_offer: "Limited Time Offer!"
+  offer_ends: "Offer ends in {hours} hours!"
+  dont_miss_out: "Don't Miss Out!"
+  loss_aversion: "Without premium, you'll miss personalized insights and risk outdated suggestions."
+  upgrade_success: "Profile updated successfully! Your AI recommendations will now be personalized."
+
+  # Dashboard messages
+  free_plan_active: "Free Plan Active"
+  free_plan_description: "You're limited to {limit} daily suggestion. Upgrade for unlimited access!"
+
+  # Usage limit messages
+  daily_limit_reached: "Daily Limit Reached"
+  daily_limit_description: "You've reached your daily limit of {limit} suggestion. Upgrade to Premium for unlimited access!"
+  generation_limit_reached: "Generation Limit Reached"
+  generation_limit_description: "You've reached your daily limit of {limit} AI generation. Upgrade to Premium for unlimited access!"
+
+  # Popup messages
+  popup_title: "Unlock Unlimited Access!"
+  popup_description: "Get personalized outfit suggestions and AI image generation without limits."
+  popup_cta: "Upgrade Now"
+
+# Features (for home page)
+features:
+  - icon: "brain"
+    title: "AI-Powered Suggestions"
+    description: "Get personalized outfit recommendations based on your profile"
+  - icon: "image"
+    title: "Visual Generation"
+    description: "See your outfits before you wear them with AI images"
+  - icon: "user"
+    title: "Personalized Experience"
+    description: "Tailored to your unique style and body type"
+
+# Popup Features
+popup_features:
+  - icon: "check"
+    text: "Unlimited daily suggestions"
+  - icon: "check"
+    text: "AI outfit generation"
+  - icon: "check"
+    text: "Advanced personalization"
+
+# Security and Trust
+security:
+  ssl_encryption: "256-bit SSL Encryption"
+  ssl_description: "Your payment information is fully secured"
+  money_back: "30-Day Money Back Guarantee"
+  money_back_description: "Not satisfied? Get a full refund, no questions asked"
+
+# Navigation
+navigation:
+  dashboard: "Dashboard"
+  daily: "Daily"
+  generate: "Generate"
+  profile: "Profile"
+
+# Page Content
+pages:
+  dashboard:
+    title: "Dashboard"
+    subtitle: "Welcome back! Here's your wardrobe overview and insights."
+
+  daily:
+    title: "Daily Outfit Suggestions"
+    subtitle: "Personalized daily outfit recommendations based on your profile and preferences"
+
+  generate:
+    title: "AI Outfit Generator"
+    subtitle: "Describe your ideal outfit and let AI generate visual suggestions for you"
+
+  profile:
+    title: "Profile Settings"
+    subtitle: "Manage your personal details and account preferences for better AI recommendations"
+
+# Tips and Help
+tips:
+  generation_tips:
+    - icon: "target"
+      title: "Be Specific"
+      description: "Include details like occasion, colors, and style preferences"
+    - icon: "zap"
+      title: "Get Creative"
+      description: "Mix styles, colors, and accessories for unique combinations"
+    - icon: "clock"
+      title: "Quick Results"
+      description: "Get 3 AI-generated outfit images in seconds"
+
+# Form Placeholders and Labels
+forms:
+  email_placeholder: "Enter your email address"
+  weather_placeholder: "e.g., sunny, rainy, cold"
+  occasion_placeholder: "e.g., casual, formal, business"
+  prompt_placeholder: "Describe your perfect outfit... e.g., 'A professional business suit for a corporate meeting' or 'Casual summer dress for a beach party'"
+  extra_info_placeholder: "Any additional preferences, allergies, or style notes..."
+
+# Activity Options
+activities:
+  - "Work/Office"
+  - "Casual Day"
+  - "Important Meeting"
+  - "Social Event"
+  - "Exercise/Sports"
+  - "Relaxed/Home"
+
+# Style Options
+styles:
+  - "Casual"
+  - "Professional"
+  - "Elegant"
+  - "Trendy"
+  - "Minimalist"
+  - "Bohemian"
+  - "Streetwear"
+  - "Vintage"
+
+# Gender Options
+genders:
+  - value: ""
+    label: "Select gender"
+  - value: "male"
+    label: "Male"
+  - value: "female"
+    label: "Female"
+  - value: "non-binary"
+    label: "Non-binary"
+  - value: "prefer-not-to-say"
+    label: "Prefer not to say"
+
+# Ethnicity Options
+ethnicities:
+  - value: ""
+    label: "Select ethnicity"
+  - value: "light"
+    label: "Light/Fair"
+  - value: "medium"
+    label: "Medium"
+  - value: "olive"
+    label: "Olive/Mediterranean"
+  - value: "tan"
+    label: "Tan"
+  - value: "dark"
+    label: "Dark"
+  - value: "ebony"
+    label: "Ebony"
