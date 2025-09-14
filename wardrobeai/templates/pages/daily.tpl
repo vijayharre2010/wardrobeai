@@ -13,7 +13,7 @@
             <i data-lucide="lock" class="icon-small" style="color: #ff6b6b;"></i>
             <div style="flex: 1;">
                 <div style="font-weight: 600; color: #ff6b6b;">Free Plan Limitation</div>
-                <div style="color: #cccccc; font-size: 0.9rem;">{{ app_config.messages.daily_limit_description|format(limit=app_config.usage_limits.daily_suggestions) }}</div>
+                <div style="color: #cccccc; font-size: 0.9rem;">{{ daily_limit_message }}</div>
             </div>
             <a href="/page/profile#premium" style="text-decoration: none;">
                 <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
@@ -32,7 +32,7 @@
             <i data-lucide="lock" class="icon" style="color: #ff6b6b; margin-bottom: 1rem;"></i>
             <h2 style="color: #ff6b6b; margin-bottom: 1rem;">Daily Limit Reached</h2>
             <p style="color: #cccccc; font-size: 1.1rem; margin-bottom: 2rem;">
-                {{ app_config.messages.daily_limit_description|format(limit=app_config.usage_limits.daily_suggestions) }}
+                {{ daily_limit_message }}
             </p>
             <div style="display: flex; gap: 1rem; justify-content: center;">
                 <a href="/page/profile#premium" style="text-decoration: none;">

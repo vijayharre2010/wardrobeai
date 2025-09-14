@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify, make_response, g, abort, render_template_string
 import os, time, yaml
+from datetime import datetime, timezone
 from supa.auth import send_magic_link, set_session_cookie, get_user_from_session
 from supa.profile import (
     update_user_profile as sp_update_user_profile,
@@ -9,8 +10,11 @@ from supa.profile import (
     get_daily_usage as sp_get_daily_usage,
     create_subscription as sp_create_subscription,
     check_feature_access as sp_check_feature_access,
+    get_wardrobe_stats as sp_get_wardrobe_stats,
+    log_generated_outfit as sp_log_generated_outfit,
+    log_planned_outfit as sp_log_planned_outfit,
 )
-from ai.wardrobe_model import suggest_outfit
+from ai.wardrobe_model import suggest_outfit, generate_outfit_images
 
 # Load configuration
 def load_config():
@@ -57,12 +61,12 @@ def load_current_user():
     ur = get_user_from_session(token) if token else None
     g.current_user = ur
     g.session_token = token
-    g.user_id = None
+    g.user_email = None
     try:
         if ur and getattr(ur, 'user', None):
-            g.user_id = ur.user.id
+            g.user_email = ur.user.email
     except Exception:
-        g.user_id = None
+        g.user_email = None
 
 # -----------------------
 # Login required decorator
@@ -71,7 +75,7 @@ def login_required(fn):
     from functools import wraps
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-        if not getattr(g, 'user_id', None):
+        if not getattr(g, 'user_email', None):
             return redirect(url_for('home'))
         return fn(*args, **kwargs)
     return decorated_function
@@ -180,7 +184,12 @@ def render_page(pagename):
     template_path = os.path.join(os.path.dirname(__file__), 'templates', 'pages', f'{pagename}.tpl')
     if not os.path.exists(template_path):
         abort(404)
-    return render_template('base.tpl', page=f'pages/{pagename}.tpl', app_config=config)
+    is_premium = sp_check_subscription_status(g.user_email, g.session_token)
+    free_plan_message = config['messages']['free_plan_description'].format(limit=config['usage_limits']['daily_suggestions'])
+    stats = None
+    if pagename == 'dashboard':
+        stats = sp_get_wardrobe_stats(g.user_email, g.session_token)
+    return render_template('base.tpl', page=f'pages/{pagename}.tpl', is_premium=is_premium, free_plan_message=free_plan_message, stats=stats, app_config=config)
 
 # -----------------------
 # Daily outfit suggestions
@@ -189,25 +198,29 @@ def render_page(pagename):
 @login_required
 def daily_page():
     # Check feature access using Supabase RLS-backed policies
-    is_premium = sp_check_subscription_status(g.user_id, g.session_token)
-    has_access = sp_check_feature_access(g.user_id, 'daily_suggestions', g.session_token)
-    usage_today = sp_get_daily_usage(g.user_id, 'daily_suggestions', g.session_token)
+    is_premium = sp_check_subscription_status(g.user_email, g.session_token)
+    has_access = sp_check_feature_access(g.user_email, 'daily_suggestions', g.session_token)
+    usage_today = sp_get_daily_usage(g.user_email, 'daily_suggestions', g.session_token)
 
+    daily_limit_message = config['messages']['daily_limit_description'].format(limit=config['usage_limits']['daily_suggestions'])
     if not has_access:
         return render_template('base.tpl', page='pages/daily.tpl',
-                              limit_exceeded=True, is_premium=is_premium, app_config=config)
+                              limit_exceeded=True, is_premium=is_premium, daily_limit_message=daily_limit_message, app_config=config)
 
     outfit = None
     if request.method == 'POST':
         weather = request.form.get('weather', '')
         activity = request.form.get('activity', '')
         # Track usage
-        sp_track_usage(g.user_id, 'daily_suggestions', g.session_token)
+        sp_track_usage(g.user_email, 'daily_suggestions', g.session_token)
         # Generate suggestion
         outfit = suggest_outfit(weather, activity)
+        # Log planned outfit
+        if outfit:
+            sp_log_planned_outfit(g.user_email, g.session_token, outfit, datetime.now(timezone.utc).date().isoformat())
 
     return render_template('base.tpl', page='pages/daily.tpl',
-                          outfit=outfit, is_premium=is_premium, usage_today=usage_today, app_config=config)
+                          outfit=outfit, is_premium=is_premium, usage_today=usage_today, daily_limit_message=daily_limit_message, app_config=config)
 
 # -----------------------
 # AI outfit generator
@@ -216,30 +229,40 @@ def daily_page():
 @login_required
 def generate_page():
     # Check feature access using Supabase RLS-backed policies
-    is_premium = sp_check_subscription_status(g.user_id, g.session_token)
-    has_access = sp_check_feature_access(g.user_id, 'generations', g.session_token)
-    usage_today = sp_get_daily_usage(g.user_id, 'generations', g.session_token)
+    is_premium = sp_check_subscription_status(g.user_email, g.session_token)
+    has_access = sp_check_feature_access(g.user_email, 'generations', g.session_token)
+    usage_today = sp_get_daily_usage(g.user_email, 'generations', g.session_token)
 
+    generation_limit_message = config['messages']['generation_limit_description'].format(limit=config['usage_limits']['ai_generations'])
     if not has_access:
         return render_template('base.tpl', page='pages/generate.tpl',
-                              limit_exceeded=True, is_premium=is_premium, app_config=config)
+                              limit_exceeded=True, is_premium=is_premium, generation_limit_message=generation_limit_message, app_config=config)
 
     generated_images = None
+    prompt = ''
+    style = ''
     if request.method == 'POST':
         prompt = request.form.get('prompt', '')
         style = request.form.get('style', '')
         # Track usage
-        sp_track_usage(g.user_id, 'generations', g.session_token)
-        # Simulate generated images
+        sp_track_usage(g.user_email, 'generations', g.session_token)
+        # Generate images using gpt4free
         if prompt:
-            generated_images = [
-                {'url': f'/static/generated/outfit1_{style}.jpg', 'alt': f'Generated outfit 1 - {style}'},
-                {'url': f'/static/generated/outfit2_{style}.jpg', 'alt': f'Generated outfit 2 - {style}'},
-                {'url': f'/static/generated/outfit3_{style}.jpg', 'alt': f'Generated outfit 3 - {style}'}
-            ]
+            generated_images = generate_outfit_images(prompt, style)
+            # Log generated outfit
+            sp_log_generated_outfit(g.user_email, g.session_token, prompt, style)
+
+    image1_url = image2_url = image3_url = None
+    if prompt and generated_images:
+        if len(generated_images) > 0:
+            image1_url = generated_images[0]
+        if len(generated_images) > 1:
+            image2_url = generated_images[1]
+        if len(generated_images) > 2:
+            image3_url = generated_images[2]
 
     return render_template('base.tpl', page='pages/generate.tpl',
-                          generated_images=generated_images, is_premium=is_premium, usage_today=usage_today, app_config=config)
+                          image1_url=image1_url, image2_url=image2_url, image3_url=image3_url, is_premium=is_premium, usage_today=usage_today, generation_limit_message=generation_limit_message, app_config=config)
 
 # -----------------------
 # Helper functions removed to avoid name shadowing.
@@ -265,7 +288,7 @@ def profile_page():
         }
 
         # Save to Supabase (RLS enforced)
-        result = sp_update_user_profile(g.user_id, profile_data, g.session_token)
+        result = sp_update_user_profile(g.user_email, profile_data, g.session_token)
 
         if result['success']:
             return render_template('base.tpl', page='pages/profile.tpl', profile_updated=True, app_config=config)
@@ -273,8 +296,8 @@ def profile_page():
             return render_template('base.tpl', page='pages/profile.tpl', profile_error=result['error'], app_config=config)
 
     # Get existing profile data for GET request
-    profile = sp_get_user_profile(g.user_id, g.session_token) if g.user_id else None
-    is_premium = sp_check_subscription_status(g.user_id, g.session_token) if g.user_id else False
+    profile = sp_get_user_profile(g.user_email, g.session_token) if g.user_email else None
+    is_premium = sp_check_subscription_status(g.user_email, g.session_token) if g.user_email else False
     return render_template('base.tpl', page='pages/profile.tpl', profile=profile, is_premium=is_premium, app_config=config)
 
 # -----------------------
@@ -283,7 +306,7 @@ def profile_page():
 @app.route('/check_subscription')
 @login_required
 def check_subscription():
-    is_premium = sp_check_subscription_status(g.user_id, g.session_token)
+    is_premium = sp_check_subscription_status(g.user_email, g.session_token)
     return jsonify({'is_premium': is_premium})
 
 # -----------------------
@@ -297,13 +320,13 @@ def upgrade():
         return redirect(url_for('render_page', pagename='profile'))
 
     # Simulate the upgrade; persistence handled by Supabase with RLS
-    result = sp_create_subscription(g.user_id, plan_type, g.session_token)
+    result = sp_create_subscription(g.user_email, plan_type, g.session_token)
 
     if result['success']:
         return redirect(url_for('render_page', pagename='profile'))
     else:
-        profile = sp_get_user_profile(g.user_id, g.session_token) if g.user_id else None
-        is_premium = sp_check_subscription_status(g.user_id, g.session_token) if g.user_id else False
+        profile = sp_get_user_profile(g.user_email, g.session_token) if g.user_email else None
+        is_premium = sp_check_subscription_status(g.user_email, g.session_token) if g.user_email else False
         return render_template('base.tpl', page='pages/profile.tpl', profile=profile, is_premium=is_premium, upgrade_error=result['error'], app_config=config)
 
 # -----------------------

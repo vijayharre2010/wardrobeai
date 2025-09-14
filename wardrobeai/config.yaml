@@ -71,7 +71,7 @@ messages:
 
   # Dashboard messages
   free_plan_active: "Free Plan Active"
-  free_plan_description: "You're limited to {limit} daily suggestion. Upgrade for unlimited access!"
+  free_plan_description: "Upgrade for unlimited access!"
 
   # Usage limit messages
   daily_limit_reached: "Daily Limit Reached"

@@ -13,7 +13,7 @@
             <i data-lucide="alert-triangle" class="icon-small" style="color: #ff6b6b;"></i>
             <div style="flex: 1;">
                 <div style="font-weight: 600; color: #ff6b6b;">Free Plan Active</div>
-                <div style="color: #cccccc; font-size: 0.9rem;">{{ app_config.messages.free_plan_description|format(limit=app_config.usage_limits.daily_suggestions) }}</div>
+                <div style="color: #cccccc; font-size: 0.9rem;">{{ free_plan_message }}</div>
             </div>
             <a href="/page/profile#premium" style="text-decoration: none;">
                 <button class="btn-primary" style="padding: 0.75rem 1.5rem; font-size: 0.9rem;">
@@ -32,7 +32,7 @@
             Wardrobe Items
         </h3>
         <div style="font-size: 2.5rem; font-weight: 700; color: #B19CD9; margin: 1rem 0;">
-            42
+            {{ stats.item_count or 0 }}
         </div>
         <p style="color: #888; font-size: 0.9rem;">Total items in your collection</p>
     </div>
@@ -43,7 +43,7 @@
             AI Suggestions
         </h3>
         <div style="font-size: 2.5rem; font-weight: 700; color: #4ecdc4; margin: 1rem 0;">
-            127
+            {{ stats.generations_count or 0 }}
         </div>
         <p style="color: #888; font-size: 0.9rem;">Outfit combinations generated</p>
     </div>
@@ -54,7 +54,7 @@
             This Week
         </h3>
         <div style="font-size: 2.5rem; font-weight: 700; color: #ff6b6b; margin: 1rem 0;">
-            8
+            {{ stats.planned_count or 0 }}
         </div>
         <p style="color: #888; font-size: 0.9rem;">Outfits planned</p>
     </div>
@@ -66,27 +66,20 @@
         Recent Activity
     </h2>
     <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for activity in stats.recent_activity %}
         <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%); border-radius: 8px;">
             <i data-lucide="plus-circle" class="icon-small" style="color: #4ecdc4;"></i>
             <div>
-                <div style="font-weight: 600; color: #ffffff;">Added new summer dress</div>
-                <div style="font-size: 0.8rem; color: #888;">2 hours ago</div>
+                <div style="font-weight: 600; color: #ffffff;">{{ activity.details or activity.action }}</div>
+                <div style="font-size: 0.8rem; color: #888;">{{ activity.rel_time }}</div>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%); border-radius: 8px;">
-            <i data-lucide="sparkles" class="icon-small" style="color: #B19CD9;"></i>
-            <div>
-                <div style="font-weight: 600; color: #ffffff;">Generated beach outfit suggestion</div>
-                <div style="font-size: 0.8rem; color: #888;">5 hours ago</div>
-            </div>
+        {% endfor %}
+        {% if not stats.recent_activity %}
+        <div style="text-align: center; color: #888; padding: 2rem;">
+            No recent activity yet. Start by generating outfits or adding items to your wardrobe.
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%); border-radius: 8px;">
-            <i data-lucide="heart" class="icon-small" style="color: #ff6b6b;"></i>
-            <div>
-                <div style="font-weight: 600; color: #ffffff;">Favorited business casual look</div>
-                <div style="font-size: 0.8rem; color: #888;">1 day ago</div>
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 

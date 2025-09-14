@@ -13,7 +13,7 @@
             <i data-lucide="lock" class="icon-small" style="color: #ff6b6b;"></i>
             <div style="flex: 1;">
                 <div style="font-weight: 600; color: #ff6b6b;">Free Plan Limitation</div>
-                <div style="color: #cccccc; font-size: 0.9rem;">{{ app_config.messages.generation_limit_description|format(limit=app_config.usage_limits.ai_generations) }}</div>
+                <div style="color: #cccccc; font-size: 0.9rem;">{{ generation_limit_message }}</div>
             </div>
             <a href="/page/profile#premium" style="text-decoration: none;">
                 <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
@@ -31,7 +31,7 @@
         <i data-lucide="lock" class="icon" style="color: #ff6b6b; margin-bottom: 1rem;"></i>
         <h2 style="color: #ff6b6b; margin-bottom: 1rem;">Generation Limit Reached</h2>
         <p style="color: #cccccc; font-size: 1.1rem; margin-bottom: 2rem;">
-            {{ app_config.messages.generation_limit_description|format(limit=app_config.usage_limits.ai_generations) }}
+            {{ generation_limit_message }}
         </p>
         <div style="display: flex; gap: 1rem; justify-content: center;">
             <a href="/page/profile#premium" style="text-decoration: none;">
@@ -123,7 +123,7 @@
     </div>
 </div>
 
-{% if generated_images %}
+{% if image1_url or image2_url or image3_url %}
 <div class="content-card">
     <h2 class="section-title">
         <i data-lucide="images" class="icon-small"></i>
@@ -131,12 +131,15 @@
     </h2>
 
     <div class="grid grid-3">
-        {% for image in generated_images %}
         <div style="background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%); border-radius: 12px; padding: 1rem; text-align: center;">
+            {% if image1_url %}
+            <img src="{{ image1_url }}" alt="Outfit 1" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+            {% else %}
             <div style="width: 100%; height: 200px; background: linear-gradient(145deg, #333333 0%, #444444 100%); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
                 <i data-lucide="image" class="icon" style="color: #666;"></i>
             </div>
-            <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit {{ loop.index }}</h4>
+            {% endif %}
+            <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit 1</h4>
             <div style="display: flex; gap: 0.5rem; justify-content: center;">
                 <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
                     <i data-lucide="heart" class="icon-small"></i>
@@ -148,7 +151,46 @@
                 </button>
             </div>
         </div>
-        {% endfor %}
+        <div style="background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%); border-radius: 12px; padding: 1rem; text-align: center;">
+            {% if image2_url %}
+            <img src="{{ image2_url }}" alt="Outfit 2" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+            {% else %}
+            <div style="width: 100%; height: 200px; background: linear-gradient(145deg, #333333 0%, #444444 100%); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="image" class="icon" style="color: #666;"></i>
+            </div>
+            {% endif %}
+            <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit 2</h4>
+            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                    <i data-lucide="heart" class="icon-small"></i>
+                    Save
+                </button>
+                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                    <i data-lucide="download" class="icon-small"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+        <div style="background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%); border-radius: 12px; padding: 1rem; text-align: center;">
+            {% if image3_url %}
+            <img src="{{ image3_url }}" alt="Outfit 3" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+            {% else %}
+            <div style="width: 100%; height: 200px; background: linear-gradient(145deg, #333333 0%, #444444 100%); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="image" class="icon" style="color: #666;"></i>
+            </div>
+            {% endif %}
+            <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit 3</h4>
+            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                    <i data-lucide="heart" class="icon-small"></i>
+                    Save
+                </button>
+                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                    <i data-lucide="download" class="icon-small"></i>
+                    Download
+                </button>
+            </div>
+        </div>
     </div>
 
     <div style="text-align: center; margin-top: 2rem;">
