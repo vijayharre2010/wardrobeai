@@ -85,7 +85,7 @@ def login_required(fn):
 # -----------------------
 @app.route('/')
 def home():
-    return render_template('home.tpl', app_config=config)
+    return render_template('home.html', app_config=config)
 
 # -----------------------
 # Send OTP code
@@ -94,18 +94,18 @@ def home():
 def login():
     email = request.form.get('email', '').strip().lower()
     if not email:
-        return render_template('home.tpl', error='Email required', app_config=config)
+        return render_template('home.html', error='Email required', app_config=config)
     # Rate limit: key by IP + email
     key = f"{request.remote_addr}:{email}"
     limited, retry_after = _rate_limited(key)
     if limited:
-        return render_template('home.tpl', error=f'Too many requests. Try again in {retry_after}s.', app_config=config)
+        return render_template('home.html', error=f'Too many requests. Try again in {retry_after}s.', app_config=config)
     redirect_to = f"{BASE_URL}/auth/callback"
     res = send_magic_link(email, redirect_to)
     if res.get('status') == 'ok':
-        return render_template('home.tpl', message='Magic link sent. Check your email.', app_config=config)
+        return render_template('home.html', message='Magic link sent. Check your email.', app_config=config)
     else:
-        return render_template('home.tpl', error=res.get('message', 'Failed to send magic link'), app_config=config)
+        return render_template('home.html', error=res.get('message', 'Failed to send magic link'), app_config=config)
 
 # -----------------------
 # Verify OTP code
@@ -172,7 +172,7 @@ def logout():
 @app.route('/api/pages')
 def get_pages():
     pages_dir = os.path.join(os.path.dirname(__file__), 'templates', 'pages')
-    names = [os.path.splitext(f)[0] for f in os.listdir(pages_dir) if f.endswith('.tpl')]
+    names = [os.path.splitext(f)[0] for f in os.listdir(pages_dir) if f.endswith('.html')]
     return jsonify({'pages': sorted(names)})
 
 # -----------------------
@@ -181,7 +181,7 @@ def get_pages():
 @app.route('/page/<pagename>')
 @login_required
 def render_page(pagename):
-    template_path = os.path.join(os.path.dirname(__file__), 'templates', 'pages', f'{pagename}.tpl')
+    template_path = os.path.join(os.path.dirname(__file__), 'templates', 'pages', f'{pagename}.html')
     if not os.path.exists(template_path):
         abort(404)
     is_premium = sp_check_subscription_status(g.user_email, g.session_token)
@@ -189,7 +189,7 @@ def render_page(pagename):
     stats = None
     if pagename == 'dashboard':
         stats = sp_get_wardrobe_stats(g.user_email, g.session_token)
-    return render_template('base.tpl', page=f'pages/{pagename}.tpl', is_premium=is_premium, free_plan_message=free_plan_message, stats=stats, app_config=config)
+    return render_template('base.html', page=f'pages/{pagename}.html', is_premium=is_premium, free_plan_message=free_plan_message, stats=stats, app_config=config)
 
 # -----------------------
 # Daily outfit suggestions
@@ -204,7 +204,7 @@ def daily_page():
 
     daily_limit_message = config['messages']['daily_limit_description'].format(limit=config['usage_limits']['daily_suggestions'])
     if not has_access:
-        return render_template('base.tpl', page='pages/daily.tpl',
+        return render_template('base.html', page='pages/daily.html',
                               limit_exceeded=True, is_premium=is_premium, daily_limit_message=daily_limit_message, app_config=config)
 
     outfit = None
@@ -219,7 +219,7 @@ def daily_page():
         if outfit:
             sp_log_planned_outfit(g.user_email, g.session_token, outfit, datetime.now(timezone.utc).date().isoformat())
 
-    return render_template('base.tpl', page='pages/daily.tpl',
+    return render_template('base.html', page='pages/daily.html',
                           outfit=outfit, is_premium=is_premium, usage_today=usage_today, daily_limit_message=daily_limit_message, app_config=config)
 
 # -----------------------
@@ -235,7 +235,7 @@ def generate_page():
 
     generation_limit_message = config['messages']['generation_limit_description'].format(limit=config['usage_limits']['ai_generations'])
     if not has_access:
-        return render_template('base.tpl', page='pages/generate.tpl',
+        return render_template('base.html', page='pages/generate.html',
                               limit_exceeded=True, is_premium=is_premium, generation_limit_message=generation_limit_message, app_config=config)
 
     generated_images = None
@@ -261,7 +261,7 @@ def generate_page():
         if len(generated_images) > 2:
             image3_url = generated_images[2]
 
-    return render_template('base.tpl', page='pages/generate.tpl',
+    return render_template('base.html', page='pages/generate.html',
                           image1_url=image1_url, image2_url=image2_url, image3_url=image3_url, is_premium=is_premium, usage_today=usage_today, generation_limit_message=generation_limit_message, app_config=config)
 
 # -----------------------
@@ -291,14 +291,14 @@ def profile_page():
         result = sp_update_user_profile(g.user_email, profile_data, g.session_token)
 
         if result['success']:
-            return render_template('base.tpl', page='pages/profile.tpl', profile_updated=True, app_config=config)
+            return render_template('base.html', page='pages/profile.html', profile_updated=True, app_config=config)
         else:
-            return render_template('base.tpl', page='pages/profile.tpl', profile_error=result['error'], app_config=config)
+            return render_template('base.html', page='pages/profile.html', profile_error=result['error'], app_config=config)
 
     # Get existing profile data for GET request
     profile = sp_get_user_profile(g.user_email, g.session_token) if g.user_email else None
     is_premium = sp_check_subscription_status(g.user_email, g.session_token) if g.user_email else False
-    return render_template('base.tpl', page='pages/profile.tpl', profile=profile, is_premium=is_premium, app_config=config)
+    return render_template('base.html', page='pages/profile.html', profile=profile, is_premium=is_premium, app_config=config)
 
 # -----------------------
 # Check subscription status (for popup)
@@ -327,7 +327,7 @@ def upgrade():
     else:
         profile = sp_get_user_profile(g.user_email, g.session_token) if g.user_email else None
         is_premium = sp_check_subscription_status(g.user_email, g.session_token) if g.user_email else False
-        return render_template('base.tpl', page='pages/profile.tpl', profile=profile, is_premium=is_premium, upgrade_error=result['error'], app_config=config)
+        return render_template('base.html', page='pages/profile.html', profile=profile, is_premium=is_premium, upgrade_error=result['error'], app_config=config)
 
 # -----------------------
 # Error handlers
