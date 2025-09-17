@@ -70,6 +70,17 @@ CREATE TABLE IF NOT EXISTS public.planned_outfits (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+-- Create favourites table
+CREATE TABLE IF NOT EXISTS public.favourites (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    email TEXT NOT NULL REFERENCES public.profiles(email) ON DELETE CASCADE,
+    outfit_type TEXT NOT NULL, -- 'generated', 'planned', 'manual'
+    outfit_description TEXT NOT NULL,
+    image_url TEXT,
+    source_id UUID, -- optional reference to generated_outfits or planned_outfits id
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
 -- Create user_activity table
 CREATE TABLE IF NOT EXISTS public.user_activity (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -80,62 +91,91 @@ CREATE TABLE IF NOT EXISTS public.user_activity (
 );
 
 -- Enable RLS for new tables
-ALTER TABLE public.wardrobe_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.generated_outfits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.planned_outfits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_activity ENABLE ROW LEVEL SECURITY;
-
--- RLS policies for wardrobe_items
-CREATE POLICY "Users can view their own items" ON public.wardrobe_items FOR SELECT USING (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can insert their own items" ON public.wardrobe_items FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can update their own items" ON public.wardrobe_items FOR UPDATE USING (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can delete their own items" ON public.wardrobe_items FOR DELETE USING (auth.jwt() ->> 'email' = email);
-
--- RLS policies for generated_outfits
-CREATE POLICY "Users can view their own generations" ON public.generated_outfits FOR SELECT USING (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can insert their own generations" ON public.generated_outfits FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
-
--- RLS policies for planned_outfits
-CREATE POLICY "Users can view their own plans" ON public.planned_outfits FOR SELECT USING (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can insert their own plans" ON public.planned_outfits FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can update their own plans" ON public.planned_outfits FOR UPDATE USING (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can delete their own plans" ON public.planned_outfits FOR DELETE USING (auth.jwt() ->> 'email' = email);
-
--- RLS policies for user_activity
-CREATE POLICY "Users can view their own activity" ON public.user_activity FOR SELECT USING (auth.jwt() ->> 'email' = email);
-CREATE POLICY "Users can insert their own activity" ON public.user_activity FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
-
--- Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wardrobe_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.generated_outfits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.planned_outfits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.favourites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_activity ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies for profiles table
+-- RLS policies for profiles table
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 CREATE POLICY "Users can view their own profile" ON public.profiles
     FOR SELECT USING (auth.jwt() ->> 'email' = email);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 CREATE POLICY "Users can insert their own profile" ON public.profiles
     FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" ON public.profiles
     FOR UPDATE USING (auth.jwt() ->> 'email' = email);
 
--- Create RLS policies for subscriptions table
+-- RLS policies for subscriptions table
+DROP POLICY IF EXISTS "Users can view their own subscriptions" ON public.subscriptions;
 CREATE POLICY "Users can view their own subscriptions" ON public.subscriptions
     FOR SELECT USING (auth.jwt() ->> 'email' = email);
 
+DROP POLICY IF EXISTS "Users can insert their own subscriptions" ON public.subscriptions;
 CREATE POLICY "Users can insert their own subscriptions" ON public.subscriptions
     FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
 
+DROP POLICY IF EXISTS "Users can update their own subscriptions" ON public.subscriptions;
 CREATE POLICY "Users can update their own subscriptions" ON public.subscriptions
     FOR UPDATE USING (auth.jwt() ->> 'email' = email);
 
--- Create RLS policies for usage_tracking table
+-- RLS policies for usage_tracking table
+DROP POLICY IF EXISTS "Users can view their own usage" ON public.usage_tracking;
 CREATE POLICY "Users can view their own usage" ON public.usage_tracking
     FOR SELECT USING (auth.jwt() ->> 'email' = email);
 
+DROP POLICY IF EXISTS "Users can insert their own usage" ON public.usage_tracking;
 CREATE POLICY "Users can insert their own usage" ON public.usage_tracking
     FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
+
+-- RLS policies for wardrobe_items
+DROP POLICY IF EXISTS "Users can view their own items" ON public.wardrobe_items;
+CREATE POLICY "Users can view their own items" ON public.wardrobe_items FOR SELECT USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can insert their own items" ON public.wardrobe_items;
+CREATE POLICY "Users can insert their own items" ON public.wardrobe_items FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can update their own items" ON public.wardrobe_items;
+CREATE POLICY "Users can update their own items" ON public.wardrobe_items FOR UPDATE USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can delete their own items" ON public.wardrobe_items;
+CREATE POLICY "Users can delete their own items" ON public.wardrobe_items FOR DELETE USING (auth.jwt() ->> 'email' = email);
+
+-- RLS policies for generated_outfits
+DROP POLICY IF EXISTS "Users can view their own generations" ON public.generated_outfits;
+CREATE POLICY "Users can view their own generations" ON public.generated_outfits FOR SELECT USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can insert their own generations" ON public.generated_outfits;
+CREATE POLICY "Users can insert their own generations" ON public.generated_outfits FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
+
+-- RLS policies for planned_outfits
+DROP POLICY IF EXISTS "Users can view their own plans" ON public.planned_outfits;
+CREATE POLICY "Users can view their own plans" ON public.planned_outfits FOR SELECT USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can insert their own plans" ON public.planned_outfits;
+CREATE POLICY "Users can insert their own plans" ON public.planned_outfits FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can update their own plans" ON public.planned_outfits;
+CREATE POLICY "Users can update their own plans" ON public.planned_outfits FOR UPDATE USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can delete their own plans" ON public.planned_outfits;
+CREATE POLICY "Users can delete their own plans" ON public.planned_outfits FOR DELETE USING (auth.jwt() ->> 'email' = email);
+
+-- RLS policies for favourites
+DROP POLICY IF EXISTS "Users can view their own favourites" ON public.favourites;
+CREATE POLICY "Users can view their own favourites" ON public.favourites FOR SELECT USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can insert their own favourites" ON public.favourites;
+CREATE POLICY "Users can insert their own favourites" ON public.favourites FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can update their own favourites" ON public.favourites;
+CREATE POLICY "Users can update their own favourites" ON public.favourites FOR UPDATE USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can delete their own favourites" ON public.favourites;
+CREATE POLICY "Users can delete their own favourites" ON public.favourites FOR DELETE USING (auth.jwt() ->> 'email' = email);
+
+-- RLS policies for user_activity
+DROP POLICY IF EXISTS "Users can view their own activity" ON public.user_activity;
+CREATE POLICY "Users can view their own activity" ON public.user_activity FOR SELECT USING (auth.jwt() ->> 'email' = email);
+DROP POLICY IF EXISTS "Users can insert their own activity" ON public.user_activity;
+CREATE POLICY "Users can insert their own activity" ON public.user_activity FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = email);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
@@ -149,6 +189,7 @@ CREATE INDEX IF NOT EXISTS idx_wardrobe_items_email ON public.wardrobe_items(ema
 CREATE INDEX IF NOT EXISTS idx_generated_outfits_email ON public.generated_outfits(email);
 CREATE INDEX IF NOT EXISTS idx_planned_outfits_email ON public.planned_outfits(email);
 CREATE INDEX IF NOT EXISTS idx_planned_outfits_date ON public.planned_outfits(planned_date);
+CREATE INDEX IF NOT EXISTS idx_favourites_email ON public.favourites(email);
 CREATE INDEX IF NOT EXISTS idx_user_activity_email ON public.user_activity(email);
 CREATE INDEX IF NOT EXISTS idx_user_activity_timestamp ON public.user_activity(timestamp);
 
@@ -161,6 +202,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create trigger for profiles table
+-- Create trigger for profiles table (idempotent)
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

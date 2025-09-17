@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, url_for, render_template, jsonify, m
 import os, time, yaml
 from datetime import datetime, timezone
 from supa.auth import send_magic_link, set_session_cookie, get_user_from_session
+from supa.client import supabase
 from supa.profile import (
     update_user_profile as sp_update_user_profile,
     get_user_profile as sp_get_user_profile,
@@ -13,6 +14,9 @@ from supa.profile import (
     get_wardrobe_stats as sp_get_wardrobe_stats,
     log_generated_outfit as sp_log_generated_outfit,
     log_planned_outfit as sp_log_planned_outfit,
+    add_favourite as sp_add_favourite,
+    get_favourites as sp_get_favourites,
+    remove_favourite as sp_remove_favourite,
 )
 from ai.wardrobe_model import suggest_outfit, generate_outfit_images
 
@@ -213,11 +217,14 @@ def daily_page():
         activity = request.form.get('activity', '')
         # Track usage
         sp_track_usage(g.user_email, 'daily_suggestions', g.session_token)
+        # Fetch user profile
+        profile = sp_get_user_profile(g.user_email, g.session_token)
         # Generate suggestion
-        outfit = suggest_outfit(weather, activity)
+        outfit = suggest_outfit(weather, activity, profile)
         # Log planned outfit
         if outfit:
-            sp_log_planned_outfit(g.user_email, g.session_token, outfit, datetime.now(timezone.utc).date().isoformat())
+            description = f"Personalized outfit for {weather} weather and {activity} occasion"
+            sp_log_planned_outfit(g.user_email, g.session_token, description, datetime.now(timezone.utc).date().isoformat())
 
     return render_template('base.html', page='pages/daily.html',
                           outfit=outfit, is_premium=is_premium, usage_today=usage_today, daily_limit_message=daily_limit_message, app_config=config)
@@ -328,6 +335,65 @@ def upgrade():
         profile = sp_get_user_profile(g.user_email, g.session_token) if g.user_email else None
         is_premium = sp_check_subscription_status(g.user_email, g.session_token) if g.user_email else False
         return render_template('base.html', page='pages/profile.html', profile=profile, is_premium=is_premium, upgrade_error=result['error'], app_config=config)
+
+# -----------------------
+# Wardrobe page
+# -----------------------
+@app.route('/page/wardrobe')
+@login_required
+def wardrobe_page():
+    # Fetch wardrobe items and favourites
+    supabase.postgrest.auth(g.session_token)
+    try:
+        items_res = supabase.table('wardrobe_items').select('*').eq('email', g.user_email).order('added_at', desc=True).execute()
+        wardrobe_items = items_res.data or []
+    except Exception as e:
+        print(f"Error fetching wardrobe items: {e}")
+        wardrobe_items = []
+
+    favourites = sp_get_favourites(g.user_email, g.session_token)
+    is_premium = sp_check_subscription_status(g.user_email, g.session_token)
+
+    return render_template('base.html', page='pages/wardrobe.html', wardrobe_items=wardrobe_items, favourites=favourites, is_premium=is_premium, app_config=config)
+
+# -----------------------
+# Save favourite outfit
+# -----------------------
+@app.route('/save_favourite', methods=['POST'])
+@login_required
+def save_favourite():
+    data = request.get_json() or {}
+    outfit_type = data.get('outfit_type')
+    outfit_description = data.get('outfit_description')
+    image_url = data.get('image_url')
+    source_id = data.get('source_id')
+
+    if not outfit_type or not outfit_description:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+    success = sp_add_favourite(g.user_email, g.session_token, outfit_type, outfit_description, image_url, source_id)
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Failed to save favourite'}), 500
+
+# -----------------------
+# Remove favourite outfit
+# -----------------------
+@app.route('/remove_favourite', methods=['POST'])
+@login_required
+def remove_favourite():
+    data = request.get_json() or {}
+    favourite_id = data.get('favourite_id')
+
+    if not favourite_id:
+        return jsonify({'success': False, 'error': 'Missing favourite_id'}), 400
+
+    success = sp_remove_favourite(g.user_email, g.session_token, favourite_id)
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Failed to remove favourite'}), 500
 
 # -----------------------
 # Error handlers

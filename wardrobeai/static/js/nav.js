@@ -18,6 +18,7 @@ async function loadNavigation() {
             'dashboard': 'layout-dashboard',
             'daily': 'sun',
             'generate': 'image',
+            'wardrobe': 'shirt',
             'profile': 'user'
         };
 
@@ -25,6 +26,7 @@ async function loadNavigation() {
             'dashboard': 'Dashboard',
             'daily': 'Daily',
             'generate': 'Generate',
+            'wardrobe': 'Wardrobe',
             'profile': 'Profile'
         };
 

@@ -319,3 +319,45 @@ def log_planned_outfit(email: str, token: str, description: str, planned_date: s
     except Exception as e:
         print(f"log_planned_outfit error for {email}: {e}")
         return False
+
+# -----------------------
+# Favourites Management
+# -----------------------
+def add_favourite(email: str, token: str, outfit_type: str, outfit_description: str, image_url: Optional[str] = None, source_id: Optional[str] = None) -> bool:
+    """Add a favourite outfit."""
+    sb = _with_user(token)
+    try:
+        favourite = {
+            'email': email,
+            'outfit_type': outfit_type,
+            'outfit_description': outfit_description,
+            'image_url': image_url,
+            'source_id': source_id,
+        }
+        sb.table('favourites').insert(favourite).execute()
+        track_wardrobe_action(email, token, 'added_favourite', f'Added favourite: {outfit_description[:50]}...')
+        return True
+    except Exception as e:
+        print(f"add_favourite error for {email}: {e}")
+        return False
+
+def get_favourites(email: str, token: str) -> List[Dict[str, Any]]:
+    """Get user's favourite outfits."""
+    sb = _with_user(token)
+    try:
+        res = sb.table('favourites').select('*').eq('email', email).order('created_at', desc=True).execute()
+        return res.data or []
+    except Exception as e:
+        print(f"get_favourites error for {email}: {e}")
+        return []
+
+def remove_favourite(email: str, token: str, favourite_id: str) -> bool:
+    """Remove a favourite outfit."""
+    sb = _with_user(token)
+    try:
+        sb.table('favourites').delete().eq('id', favourite_id).eq('email', email).execute()
+        track_wardrobe_action(email, token, 'removed_favourite', f'Removed favourite {favourite_id}')
+        return True
+    except Exception as e:
+        print(f"remove_favourite error for {email}: {e}")
+        return False

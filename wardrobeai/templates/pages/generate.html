@@ -141,7 +141,7 @@
             {% endif %}
             <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit 1</h4>
             <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                <button class="btn-secondary save-fav" data-outfit-type="generated" data-description="Generated outfit: {{ prompt or 'custom request' }} in {{ style or 'selected' }} style" data-image-url="{{ image1_url }}" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
                     <i data-lucide="heart" class="icon-small"></i>
                     Save
                 </button>
@@ -161,7 +161,7 @@
             {% endif %}
             <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit 2</h4>
             <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                <button class="btn-secondary save-fav" data-outfit-type="generated" data-description="Generated outfit: {{ prompt or 'custom request' }} in {{ style or 'selected' }} style" data-image-url="{{ image2_url }}" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
                     <i data-lucide="heart" class="icon-small"></i>
                     Save
                 </button>
@@ -181,7 +181,7 @@
             {% endif %}
             <h4 style="color: #ffffff; margin-bottom: 0.5rem;">Outfit 3</h4>
             <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                <button class="btn-secondary save-fav" data-outfit-type="generated" data-description="Generated outfit: {{ prompt or 'custom request' }} in {{ style or 'selected' }} style" data-image-url="{{ image3_url }}" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
                     <i data-lucide="heart" class="icon-small"></i>
                     Save
                 </button>
@@ -201,3 +201,36 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.save-fav').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const outfitType = this.getAttribute('data-outfit-type');
+            const description = this.getAttribute('data-description');
+            const imageUrl = this.getAttribute('data-image-url');
+
+            try {
+                const response = await fetch('/save_favourite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        outfit_type: outfitType,
+                        outfit_description: description,
+                        image_url: imageUrl
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Outfit saved to favourites!');
+                } else {
+                    alert('Failed to save favourite: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving favourite');
+            }
+        });
+    });
+});
+</script>

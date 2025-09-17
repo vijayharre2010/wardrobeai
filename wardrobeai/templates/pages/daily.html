@@ -111,7 +111,7 @@
             </div>
 
             <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                <button class="btn-secondary" style="flex: 1;">
+                <button class="btn-secondary save-fav" data-outfit-type="planned" data-description="{{ outfit }}" style="flex: 1;">
                     <i data-lucide="heart" class="icon-small"></i>
                     Save to Favorites
                 </button>
@@ -162,3 +162,34 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.save-fav').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const outfitType = this.getAttribute('data-outfit-type');
+            const description = this.getAttribute('data-description');
+
+            try {
+                const response = await fetch('/save_favourite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        outfit_type: outfitType,
+                        outfit_description: description
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Outfit saved to favourites!');
+                } else {
+                    alert('Failed to save favourite: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving favourite');
+            }
+        });
+    });
+});
+</script>
